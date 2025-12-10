@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createTransfer = `-- name: CreateTransfer :one
@@ -20,9 +19,9 @@ RETURNING id, from_account_id, to_account_id, amount, created_at
 `
 
 type CreateTransferParams struct {
-	FromAccountID sql.NullInt32 `json:"from_account_id"`
-	ToAccountID   sql.NullInt32 `json:"to_account_id"`
-	Amount        int64         `json:"amount"`
+	FromAccountID int64 `json:"from_account_id"`
+	ToAccountID   int64 `json:"to_account_id"`
+	Amount        int64 `json:"amount"`
 }
 
 func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
@@ -36,16 +35,6 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		&i.CreatedAt,
 	)
 	return i, err
-}
-
-const deleteTransfer = `-- name: DeleteTransfer :exec
-DELETE FROM transfers
-WHERE id = $1
-`
-
-func (q *Queries) DeleteTransfer(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteTransfer, id)
-	return err
 }
 
 const getTransfer = `-- name: GetTransfer :one
@@ -68,11 +57,19 @@ func (q *Queries) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
 
 const listTransfers = `-- name: ListTransfers :many
 SELECT id, from_account_id, to_account_id, amount, created_at FROM transfers
+WHERE
+  from_account_id = $1 OR
+  to_account_id = $2
 ORDER BY id
 `
 
-func (q *Queries) ListTransfers(ctx context.Context) ([]Transfer, error) {
-	rows, err := q.db.QueryContext(ctx, listTransfers)
+type ListTransfersParams struct {
+	FromAccountID int64 `json:"from_account_id"`
+	ToAccountID   int64 `json:"to_account_id"`
+}
+
+func (q *Queries) ListTransfers(ctx context.Context, arg ListTransfersParams) ([]Transfer, error) {
+	rows, err := q.db.QueryContext(ctx, listTransfers, arg.FromAccountID, arg.ToAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -98,29 +95,4 @@ func (q *Queries) ListTransfers(ctx context.Context) ([]Transfer, error) {
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateTransfer = `-- name: UpdateTransfer :exec
-UPDATE transfers
-  set from_account_id = $2,
-  to_account_id = $3,
-  amount = $4
-WHERE id = $1
-`
-
-type UpdateTransferParams struct {
-	ID            int64         `json:"id"`
-	FromAccountID sql.NullInt32 `json:"from_account_id"`
-	ToAccountID   sql.NullInt32 `json:"to_account_id"`
-	Amount        int64         `json:"amount"`
-}
-
-func (q *Queries) UpdateTransfer(ctx context.Context, arg UpdateTransferParams) error {
-	_, err := q.db.ExecContext(ctx, updateTransfer,
-		arg.ID,
-		arg.FromAccountID,
-		arg.ToAccountID,
-		arg.Amount,
-	)
-	return err
 }
