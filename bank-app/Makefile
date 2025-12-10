@@ -10,6 +10,9 @@ stop :
 cli:
 	docker exec -it postgres12 psql -U root 
 
+clidb:
+	docker exec -it postgres12 psql -U root -d bank_app
+
 createdb:
 	docker exec -it postgres12 createdb -U root bank_app
 
@@ -28,4 +31,4 @@ test:
 sqlc:
 	sqlc generate
 
-.PHONY: createdb dropdb migrateup migratedown start stop cli postgres sqlc test
+.PHONY: createdb dropdb migrateup migratedown start stop cli clidb postgres sqlc test
