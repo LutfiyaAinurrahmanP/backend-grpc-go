@@ -31,4 +31,7 @@ test:
 sqlc:
 	sqlc generate
 
-.PHONY: createdb dropdb migrateup migratedown start stop cli clidb postgres sqlc test
+server:
+	go run main.go
+
+.PHONY: createdb dropdb migrateup migratedown start stop cli clidb postgres sqlc test server
