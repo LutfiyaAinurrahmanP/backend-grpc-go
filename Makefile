@@ -34,4 +34,10 @@ sqlc:
 server:
 	go run main.go
 
-.PHONY: createdb dropdb migrateup migratedown start stop cli clidb postgres sqlc test server
+ptr:
+	go fmt ./...
+
+mock:
+	mockgen -package mockdb -destination db/mock/store.go github.com/LutfiyaAinurrahmanP/backend-grpc-go/db/sqlc Store
+
+.PHONY: createdb dropdb migrateup migratedown start stop cli clidb postgres sqlc test server mock ptr
